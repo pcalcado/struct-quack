@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<project name="quack-struct" default="jar">
+  <description>
+    Duck typed structs for clojure
+  </description>
+  <property name="build.dir" location="classes"/>
+  <property name="deps.dir" location="deps"/>
+  <property name="source.dir" location="src"/>
+  <property name="test.dir" location="test"/>
+  <property name="quack-struct.jar" location="quack-struct.jar"/>
+
+  <path id="dependencies">
+    <fileset dir="${deps.dir}">
+      <include name="*.jar"/>
+    </fileset>
+  </path>
+
+  <target name="clean" description="Remove generated files">
+    <delete file="${quack-struct.jar}"/>
+    <delete dir="${build.dir}"/>
+  </target>
+
+  <target name="init">
+    <tstamp/>
+    <mkdir dir="${build.dir}"/>
+  </target>
+
+  <target name="compile" description="Compile sources">
+    <java classname="clojure.lang.Compile">
+      <classpath>
+        <path location="${build.dir}"/>
+        <path location="${source.dir}"/>
+        <fileset dir="${deps.dir}">
+          <include name="*.jar"/>
+        </fileset>
+      </classpath>
+      <sysproperty key="clojure.compile.path" value="${build.dir}"/>
+      <arg value="quack-struct"/>
+    </java>
+  </target>
+
+  <target name="jar" depends="init, compile, test" description="Create jar file">
+    <jar jarfile="${quack-struct.jar}">
+      <path location="LICENSE"/>
+      <fileset dir="${source.dir}" includes="**/*.clj"/>
+      <fileset dir="${build.dir}" includes="**/*.class"/>
+    </jar>
+  </target>
+
+  <target name="test" description="Run unit tests">
+    <java classname="clojure.lang.Script" failonerror="true" fork="true">
+      <arg value="src/run-fato.clj"/>
+      <arg value="--"/>
+      <arg value="test/" />
+      <classpath>
+        <path refid="dependencies"/>
+        <path location="${source.dir}"/>
+        <path location="${test.dir}"/>
+      </classpath>
+    </java>
+  </target>
+</project>
