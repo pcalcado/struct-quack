@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<project name="quack-struct" default="jar">
+<project name="struct-quack" default="jar">
   <description>
     Duck typed structs for clojure
   </description>
@@ -7,7 +7,7 @@
   <property name="deps.dir" location="deps"/>
   <property name="source.dir" location="src"/>
   <property name="test.dir" location="test"/>
-  <property name="quack-struct.jar" location="quack-struct.jar"/>
+  <property name="struct-quack.jar" location="struct-quack.jar"/>
 
   <path id="dependencies">
     <fileset dir="${deps.dir}">
@@ -16,7 +16,7 @@
   </path>
 
   <target name="clean" description="Remove generated files">
-    <delete file="${quack-struct.jar}"/>
+    <delete file="${struct-quack.jar}"/>
     <delete dir="${build.dir}"/>
   </target>
 
@@ -35,12 +35,12 @@
         </fileset>
       </classpath>
       <sysproperty key="clojure.compile.path" value="${build.dir}"/>
-      <arg value="quack-struct"/>
+      <arg value="struct-quack"/>
     </java>
   </target>
 
   <target name="jar" depends="init, compile, test" description="Create jar file">
-    <jar jarfile="${quack-struct.jar}">
+    <jar jarfile="${struct-quack.jar}">
       <path location="LICENSE"/>
       <fileset dir="${source.dir}" includes="**/*.clj"/>
       <fileset dir="${build.dir}" includes="**/*.class"/>

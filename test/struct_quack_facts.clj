@@ -1,5 +1,5 @@
 (use 'fato)
-(use 'quack-struct)
+(use 'struct-quack)
 
 (sheet "a duck typed struct"
 

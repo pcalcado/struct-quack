@@ -1,4 +1,4 @@
-(ns quack-struct)
+(ns struct-quack)
 (import '(java.util Map))
 
 (defmulti attributes-in #(isa? (class %) Map) )
