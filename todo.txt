@@ -1,6 +1,0 @@
-X = Done
-P = Phill Calçado
-
-Checklist for alpha (By Priority):
-[P] struct-quack should create a duck typed strcut specified by a defstruct
-[ ] Benchmark pure clojure x Java implementation
