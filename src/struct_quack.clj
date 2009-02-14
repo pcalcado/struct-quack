@@ -4,7 +4,9 @@
 
 (def *attribute-missing-registry* (ref {}))
 
-(defn struct-type-of [a-struct]
+(defn struct-type-of 
+  "Returns the Symbol that identifies this structure's type. This is stored as metadata under :struct-type"
+  [a-struct]
   (or (:struct-type ^a-struct)
       (. a-struct keySet)))
 
@@ -74,10 +76,14 @@
 		  {:struct-type struct-name})
       (attr-missing-for a-struct keys))))
 
-(defmacro struct-quack [struct-name & attrs]
+(defmacro struct-quack
+  "Instantiates a duck-typed struct."
+  [struct-name & attrs]
   `(struct-quack-impl '~struct-name ~struct-name ~@attrs))
 
-(defmacro defquack [struct-name attr-missing & attr-names]
+(defmacro defquack
+  "The same as defstruct except that you can supply a attribute-missing function to use with struct-quack"
+  [struct-name attr-missing & attr-names]
   `(do 
      (register-attr-missing-for '~struct-name ~attr-missing)
      (defstruct ~struct-name ~@attr-names)))
