@@ -9,7 +9,11 @@
 	     (struct-quack my-struct :attr1 1))
        
        (fact "has its defining struct as metadata" []
-       	     (= 'my-struct (:struct-type  ^(struct-quack my-struct :attr1 1 :attr2 2))))
+	     (let [a-struct  (struct-quack my-struct :attr1 1 :attr2 2)]
+	       (= 
+		'my-struct 
+		(:struct-type  ^a-struct) 
+		(struct-type-of a-struct))))
        
        (fact "doesn't need to have all slots populated" [slot [:attr1 :attr2]]
 	     (struct-quack my-struct slot 'a-value))
@@ -36,11 +40,8 @@
 	       (struct-quack my-struct :attr1 1 :attr2 2)
 	       (struct-quack my-struct :attr2 2))))
 
-       (fact "a nil key is still accessible")
-
-       (fact "is equivalent to a struct-map" )
-;	     [slots [[] [:att1 1] [:attr2 2] [:attr1 1 :attr2 2]]]
-;	     (map (fn [x] (apply x my-struct slots)) (list struct-map struct-quack)))
+       (fact "a nil key is still accessible" []
+	     (nil? (:attr2 (struct-quack my-struct :attr1 1))))
        
        (fact "throw exception when trying to set inexistent slot"
 	     [inexistent-slot [:attr-that-does-not-exist]]
@@ -69,28 +70,20 @@
 	      (catch UnsupportedOperationException e
 		true))))
 
-;(sheet "a struct created using defquack"
- ;             (defquack my-own-struct :a :b)
-;
- ;      (fact "contains metadata" []
-	;     (= {:struct-type 'struct-quack} ^my-own-struct)))
-;
-;(sheet "a duck typed struct instance based on defquack"
-;       (fact "it rejects a missing-attribute that does not receive one parameter")
-;
-;       (fact "it throws exception by default"
-;	     [inexistent-slot [:a :b :c :d :e :f]]
-;	     (try
-;	      ((struct-quack my-struct) inexistent-slot)
-;	      false
-;	      (catch UnsupportedOperationException e
-;		true))))
-;
-;(sheet "a duck typed struct instance based on a defquack with attribute-missing"
-;       (println (macroexpand-1 '(defquack quacker (fn[s k] (list :struct s :key k)) :this-exists)))
-;       (defquack quacker #(list :before % :after) :this-exists)
-;
-;       (fact "it returns the defined attribute-missing function if supplied"
-;	     [attribute [:a :b :c] ]
-;	     (= (list :before 'quacker :key attribute) 
-;		((struct-quack quacker :this-exists 1) :inexistent-field))));;;;;;;;;
+(sheet "a duck typed struct instance based on a defquack with attribute-missing"
+       (def attr-missing (fn [s a] (list :before (struct-type-of s) :after a)))
+       (defquack quacker attr-missing :this-exists)
+
+       (fact "has as its struct-type the defquack'd struct" []
+	     (= 'quacker (struct-type-of (struct-quack quacker))))
+
+       (fact "returns the default attribute-missing when creating"
+	     (try
+	      (struct-quack quacker :inexistent-slot 1)
+	      false
+	      (catch UnsupportedOperationException e
+		true)))
+
+       (fact "returns the defined attribute-missing for a get" []
+	     (= (list :before 'quacker :after :inexistent-field) 
+		((struct-quack quacker :this-exists 1) :inexistent-field))))
