@@ -1,51 +1,53 @@
 (ns struct-quack)
-(import '(java.util Map))
+(import '(java.util Map) 
+	'(clojure.lang PersistentStructMap$Def))
 
-(defmulti attributes-in #(isa? (class %) Map) )
+(defmulti defines-attributes? (fn[s & _] (class s)))
 
-(defmethod attributes-in true [struct]
-  (. struct keySet))
+(defmethod defines-attributes? Map [a-struct & keys]
+  (every? #(. a-struct containsKey %) keys))
 
-(defmethod attributes-in false [struct-def]
-  (attributes-in (struct-map struct-def)))
+(defn- attr-missing-for [a-struct & keys]
+  (throw (UnsupportedOperationException. (str "Requested keys " keys  " are not part of the struct " a-struct))))
 
-(defn- keys-at [arguments]
-  (map first (partition 2 arguments)))
+(defn- keys-in [attrs]
+  (map first (partition 2 attrs)))
 
-(defn- valid-arguments-for? [struct arguments]
-  (= 0 (count (remove 
-	       #(. (attributes-in struct) contains %)  
-	       (keys-at arguments)))))
+(defn- duck-type-validated [a-struct attrs]
+  (doseq [key (keys-in attrs)]
+    (when-not (defines-attributes? a-struct key)
+      (attr-missing-for a-struct key))))
 
-(defn- access-error! [struct & desired-keys]
-  (throw 
-   (UnsupportedOperationException. (str "Attributes " desired-keys " don't exit among " (attributes-in struct)))))
-
-(defn- attribute-if-exists [struct key]
-  (when-not (. struct containsKey key) (access-error! struct key))
-  (struct key))
+(defn- duck-typed-get [a-struct key]
+  (if (defines-attributes? a-struct key)
+    (a-struct key)
+    (attr-missing-for a-struct key)))
 
 (defn- duck-typed-struct-wrapper 
-  ([struct] 
-     (duck-typed-struct-wrapper struct nil)) 
-  ([struct metadata]
+  ([a-struct] 
+     (duck-typed-struct-wrapper a-struct nil)) 
+  ([a-struct metadata]
      (proxy [clojure.lang.IObj clojure.lang.IFn Map] []
        (get [key] 
-	    (attribute-if-exists struct key))
+	    (duck-typed-get a-struct key))
        (invoke [key] 
-	       (attribute-if-exists struct key))
+	       (duck-typed-get a-struct key))
        (withMeta [new-metadata] 
-		 (duck-typed-struct-wrapper struct new-metadata))
-       (meta [] metadata))))
+		 (duck-typed-struct-wrapper a-struct new-metadata))
+       (meta [] metadata)
+       (equals[other-struct] true))))
 
-(defn- create-quack [struct-name struct-definition  args]
-  (with-meta (duck-typed-struct-wrapper (apply struct-map struct-definition args)) {:struct-type struct-name}  ))
+(defn- plain-struct-map [struct-name attrs]
+  (merge (apply struct-map struct-name attrs)))
 
-(defn struct-quack-impl [struct-name struct-definition & populating]
-  (cond
-   (valid-arguments-for? struct-definition populating) (create-quack struct-name struct-definition populating)
-   :else (access-error! struct-definition (keys-at populating))))
+(defn struct-quack-impl [struct-name struct-definition & attrs]
+  (let [a-struct (struct-map struct-definition)
+	keys (keys-in attrs)]
+    (if (apply defines-attributes? a-struct keys)
+      (with-meta (duck-typed-struct-wrapper 
+		  (plain-struct-map struct-definition attrs))
+		 {:struct-type struct-name})
+      (attr-missing-for a-struct keys))))
 
-(defmacro struct-quack [struct & populating]
-  `(struct-quack-impl '~struct ~struct ~@populating))
-
+(defmacro struct-quack [struct-name & attrs]
+  `(struct-quack-impl '~struct-name ~struct-name ~@attrs))
