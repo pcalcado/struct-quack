@@ -44,6 +44,9 @@
     (a-struct key)
     (attr-missing-for a-struct key)))
 
+(defn- informative-string [struct]
+  (str "struct-quack [:struct-type " (^struct :struct-type) " " struct "]"))
+
 (defn- duck-typed-struct-wrapper [a-struct metadata]
   (let [a-struct-with-meta (with-meta a-struct metadata)]
     (proxy [clojure.lang.IObj clojure.lang.IFn Map] []     
@@ -56,7 +59,8 @@
       (meta [] 
 	    metadata)
       (equals[other-struct] 
-	     (= other-struct a-struct-with-meta)))))
+	     (= other-struct a-struct-with-meta))
+      (toString [] (informative-string a-struct-with-meta)))))
 
 (defn- plain-struct-map [struct-name attrs]
   (merge (apply struct-map struct-name attrs)))

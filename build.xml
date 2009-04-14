@@ -51,9 +51,7 @@
 
   <target name="test" description="Run unit tests">
     <java classname="clojure.lang.Script" failonerror="true" fork="true">
-      <arg value="src/run-fato.clj"/>
-      <arg value="--"/>
-      <arg value="test/" />
+      <arg value="test/struct_quack_test.clj"/>
       <classpath>
         <path refid="dependencies"/>
         <path location="${source.dir}"/>
