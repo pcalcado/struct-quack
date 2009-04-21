@@ -27,8 +27,6 @@
    (catch UnsupportedOperationException e
      ;success
      )))
- 
-
 
 ;throws exception when trying to instantiate with inexistent slot
 (defstruct cat :color)
@@ -43,3 +41,11 @@
 (defstruct spider :poison?)
 (let [s (struct-quack spider :poison? true)]
   (assert-equals "struct-quack [:struct-type spider {:poison? true}]" (str s)))
+
+;can use expressions on values
+(defstruct twitter :login :following)
+(let [col1 [1]
+      col2 [2]
+      my-twitter (struct-quack twitter :login "pcalcado" :following (concat col1 col2))]
+  (assert-equals "pcalcado" (:login my-twitter))
+  (assert-equals [1 2] (:following my-twitter)))
